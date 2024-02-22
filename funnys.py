@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from random import choice
-from typing import List
+from typing import List, Literal, Tuple
 
 
 class DBFUNNY:
@@ -58,3 +58,23 @@ class RFUNNY:
         if option.startswith('\n'):
             option = option.replace('\n', '', 1)
         return option
+
+
+class AZTRO:
+    __version__ = '1.0.0'
+    SIGNS = Literal['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓']
+    TRANSLATE_SIGNS = {'♈': 'aries', '♉': 'taurus', '♊': 'gemini', '♋': 'cancer', '♌': 'leo', '♍': 'virgo',
+                       '♎': 'libra', '♏': 'scorpio', '♐': 'sagittarius', '♑': 'capricorn', '♒': 'aquarius',
+                       '♓': 'pisces'}
+
+    def __init__(self):
+        self.url = 'https://horoscopes.rambler.ru/'
+
+    def get_answer(self, sign: SIGNS) -> tuple[str, str] | None:
+        response = requests.get(self.url + AZTRO.TRANSLATE_SIGNS[sign] + '/')
+        if response.status_code == 200:
+            text = response.text
+            sign = BeautifulSoup(text, "html.parser").find('h1').text
+            text = BeautifulSoup(text, "html.parser").find('p').text
+            return sign, text
+        return
