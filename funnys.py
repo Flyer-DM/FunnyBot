@@ -28,17 +28,17 @@ class DBFUNNY:
 
 
 class RFUNNY:
-    __version__ = '2.0'
+    __version__ = '2.0.1'
 
     async def get_page_data(self, session, page):
-        HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
                                  'Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36'}
         if self.__url_type:
             page = f'{page}/' if page != 1 else ''
             url = self.__url + page
         else:
             url = f'{self.__url}{page}.html'
-        async with session.get(url=url, headers=HEADERS) as response:
+        async with session.get(url=url, headers=headers) as response:
             response_text = await response.text()
             soup = BeautifulSoup(response_text, "html.parser")
             allp = map(lambda html: html.findAll('p')[0].get_text(), soup.findAll(class_=self.__findall_cls))
