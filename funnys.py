@@ -1,7 +1,9 @@
 import requests
+import asyncio
+import aiohttp
 from bs4 import BeautifulSoup
 from random import choice
-from typing import List, Literal, Tuple
+from typing import List, Literal
 
 
 class DBFUNNY:
@@ -26,34 +28,42 @@ class DBFUNNY:
 
 
 class RFUNNY:
-    __version__ = '1.0'
-    HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                             'Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36'}
+    __version__ = '2.0'
 
-    @classmethod
-    def __parse_jokes(cls, url: str, pages: tuple[int, int], findall_cls: str, url_type: bool = True) -> List[str]:
-        jokes: List[str] = []
-        for i in range(*pages):
-            if url_type:
-                page = f'{i}/' if i != 1 else ''
-                url = url + page
-            else:
-                url = f'{url}{i}.html'
-            response = requests.get(url, headers=cls.HEADERS)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, "html.parser")
-                allp = map(lambda text: text.findAll('p')[0].get_text(), soup.findAll(class_=findall_cls))
-                jokes.extend(allp)
-        return jokes
+    async def get_page_data(self, session, page):
+        HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                                 'Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36'}
+        if self.__url_type:
+            page = f'{page}/' if page != 1 else ''
+            url = self.__url + page
+        else:
+            url = f'{self.__url}{page}.html'
+        async with session.get(url=url, headers=HEADERS) as response:
+            response_text = await response.text()
+            soup = BeautifulSoup(response_text, "html.parser")
+            allp = map(lambda html: html.findAll('p')[0].get_text(), soup.findAll(class_=self.__findall_cls))
+            self.jokes.extend(allp)
+
+    async def parse_pages(self):
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for page in range(*self.__pages):
+                task = asyncio.create_task(self.get_page_data(session, page))
+                tasks.append(task)
+            await asyncio.gather(*tasks)
 
     def __init__(self, url: str, pages: tuple[int, int], findall_cls: str, url_type: bool = True):
+        self.__url = url
+        self.__pages = pages
+        self.__findall_cls = findall_cls
         self.__url_type = url_type
-        self.__jokes: List[str] = RFUNNY.__parse_jokes(url, pages, findall_cls, url_type)
+        self.jokes = []
+        asyncio.run(self.parse_pages())
 
     def get_joke(self) -> str:
         if not self.__url_type:
-            return choice(self.__jokes)
-        option = choice(self.__jokes)
+            return choice(self.jokes)
+        option = choice(self.jokes)
         option = option.replace('— ', '\n— ')
         if option.startswith('\n'):
             option = option.replace('\n', '', 1)
