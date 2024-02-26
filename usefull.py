@@ -1,13 +1,15 @@
 import os
 import asyncio
 import img2pdf
+from aiogram import Bot
+from aiogram.types import FSInputFile
 from typing import Any, Awaitable, Callable, Dict, List, Union
 from aiogram import BaseMiddleware
 from aiogram.types import Message, TelegramObject
 
 
 class MediaGroupMiddleware(BaseMiddleware):
-    __version__ = '1.0.0'
+    __version__ = '1.0'
     ALBUM_DATA: Dict[str, List[Message]] = {}
     DEFAULT_DELAY = 0.6
 
@@ -35,7 +37,7 @@ class MediaGroupMiddleware(BaseMiddleware):
 
 
 class PDFer:
-    __version__ = '1.0.0'
+    __version__ = '1.0'
 
     def __init__(self, username: str):
         self.username = username
@@ -54,3 +56,28 @@ class PDFer:
 
     def clear(self):
         os.remove(self.filename)
+
+
+class PDFWorker:
+    __version__ = '1.0'
+
+    def __init__(self, bot: Bot, username: str):
+        self.bot = bot
+        self.username = username
+
+    async def save_photo(self, file_id: str, i: int = 1) -> None:
+        file = await self.bot.get_file(file_id)
+        file_path = file.file_path
+        downloaded_file = await self.bot.download_file(file_path)
+        with open(f"./photos/photo_{self.username}_{i}.jpg", "wb") as new_file:
+            new_file.write(downloaded_file.read())
+        return
+
+    async def send_pdf_photo(self, my_message: Message, message: Message):
+        await my_message.edit_text("Сохранил! Преобразую...")
+        pdfer = PDFer(self.username)
+        pdf = FSInputFile(pdfer())
+        await my_message.edit_text("Преобразовал! Отправляю...")
+        await self.bot.send_document(message.chat.id, pdf, caption="Ваш PDF-файл")
+        await my_message.delete()
+        pdfer.clear()

@@ -3,7 +3,7 @@ from funnys import *
 from usefull import *
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
-from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup, FSInputFile
+from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.enums import ParseMode
 from random import choice
 from datetime import datetime
@@ -89,8 +89,7 @@ async def send_horoscope(message: Message):
     logger.info(f'RESPONSE SENT TO {message.from_user.username}')
 
 
-@dp.message(F.media_group_id)
-async def handle_albums(message: Message, album: List[Message]):
+async def check_message(message: Message) -> Union[bool, str]:
     username = message.from_user.username
     chat_type = message.chat.type
     logger.info(f'REQUEST FOR IMAGE TO PDF FROM {username} IN {chat_type}')
@@ -99,26 +98,38 @@ async def handle_albums(message: Message, album: List[Message]):
         await message.reply(text='Не могу выполнить это действие в групповом чате! Пиши мне в лс -> '
                                  'https://t.me/Sabir_Dobryak_bot')
         await bot.send_message(message.from_user.id, "Скинь мне одну или несколько картинок и я сделаю из них pdf.")
+        return False
+    return username
+
+
+@dp.message(F.media_group_id)
+async def photos_to_pdf(message: Message, album: List[Message]):
+    if not (username := await check_message(message)):
         return
-    photos = []
+    pdfworker = PDFWorker(bot, username)
     my_message = await message.answer("Фото получил сохраняю...")
-    for element in album:
-        if element.photo:
-            photos.append(element.photo[-1].file_id)
-    for i, file_id in enumerate(photos, 1):
-        await my_message.edit_text(f"Сохраняю фото номер {i}")
-        file = await bot.get_file(file_id)
-        file_path = file.file_path
-        downloaded_file = await bot.download_file(file_path)
-        with open(f"./photos/photo_{username}_{i}.jpg", "wb") as new_file:
-            new_file.write(downloaded_file.read())
-    await my_message.edit_text("Сохранил! Преобразую...")
-    pdfer = PDFer(username)
-    pdf = FSInputFile(pdfer())
-    await my_message.edit_text("Преобразовал! Отправляю...")
-    await bot.send_document(message.chat.id, pdf, caption="Ваш PDF-файл")
-    await my_message.delete()
-    pdfer.clear()
+    for i, photo in enumerate(album, 1):
+        if photo := photo.photo:
+            await my_message.edit_text(f"Сохраняю фото номер {i}")
+            await pdfworker.save_photo(photo[-1].file_id, i)
+        else:
+            await bot.send_message(message.from_user.id, "Среди фото необрабатываемый файл! Его пропустил")
+    logger.info(f'IMAGES FROM {username} SAVED')
+    await pdfworker.send_pdf_photo(my_message, message)
+    logger.info(f'PDF FOR {username} SENT')
+
+
+@dp.message(F.photo)
+async def photo_to_pdf(message: Message):
+    if not (username := await check_message(message)):
+        return
+    pdfworker = PDFWorker(bot, username)
+    my_message = await message.answer("Фото получил сохраняю...")
+    await my_message.edit_text(f"Сохраняю фото номер 1")
+    await pdfworker.save_photo(message.photo[-1].file_id)
+    logger.info(f'IMAGE FROM {username} SAVED')
+    await pdfworker.send_pdf_photo(my_message, message)
+    logger.info(f'PDF FOR {username} SENT')
 
 
 if __name__ == '__main__':
