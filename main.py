@@ -1,38 +1,9 @@
-import logging
-from funnys import *
-from aiogram import Bot, Dispatcher, F
+from variables import *
+from aiogram import F
 from aiogram.filters import Command
 from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.enums import ParseMode
 from random import choice
-from datetime import datetime
-
-DATE = str(datetime.now().strftime('%I %M%p on %B %d, %Y'))
-
-logging.basicConfig(filename=f'log/logging {DATE}.log',
-                    format='%(asctime)s %(message)s',
-                    filemode='w', datefmt='%d-%b-%y %H:%M:%S')
-logger = logging.getLogger('FunnyBot')
-logger.setLevel(logging.INFO)
-logger.info('START')
-# ********* READING MY BOT TOKEN ***********#
-with open('token.txt', 'r') as token_file:  #
-    token = token_file.read()               #
-# ******************************************#
-
-bot = Bot(token=token)
-dp = Dispatcher()
-
-KRINGE = "Kringe"
-BLACK = "Black"
-HOROSYMBS = '♈♉♊♋♌♍♎♏♐♑♒♓'
-
-dbfunny = DBFUNNY()
-rfunny1 = RFUNNY('https://anekdoty.ru/cherniy-yumor/', (1, 6), 'holder-body')
-rfunny2 = RFUNNY('https://anekdotov.net/anekdot/black/index-page-', (0, 37), 'anekdot', False)
-rfunny3 = RFUNNY('https://anekdotovstreet.com/chernyy-yumor/', (1, 16), 'anekdot-text')
-aztro = AZTRO()
-logger.info('END OF WEB PARSING')
 
 
 @dp.message(Command(commands=['anecdote']))
