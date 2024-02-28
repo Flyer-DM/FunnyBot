@@ -1,45 +1,15 @@
-import logging
-from funnys import *
-from usefull import *
-from aiogram import Bot, Dispatcher, F
+from setup.commands import *
+from setup.variables import *
+from funcs.funnys import *
+from funcs.usefull import *
+from aiogram import F
 from aiogram.filters import Command
 from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
 from aiogram.enums import ParseMode
 from random import choice
-from datetime import datetime
-
-DATE = str(datetime.now().strftime('%I %M%p on %B %d, %Y'))
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.info('START')
-# ********* READING MY BOT TOKEN ***********#
-with open('token.txt', 'r') as token_file:  #
-    token = token_file.read()               #
-# ******************************************#
-
-bot = Bot(token=token)
-dp = Dispatcher()
-
-CHAT_GROUP = 'group'
-CHAT_PRIVATE = 'private'
-CHAT_SUPERGROUP = 'supergroup'
-
-KRINGE = "Kringe"
-BLACK = "Black"
-HOROSYMBS = '♈♉♊♋♌♍♎♏♐♑♒♓'
-
-dbfunny = DBFUNNY()
-logger.info('START OF WEB PARSING')
-rfunny1 = RFUNNY('https://anekdoty.ru/cherniy-yumor/', (1, 6), 'holder-body')
-rfunny2 = RFUNNY('https://anekdotov.net/anekdot/black/index-page-', (0, 37), 'anekdot', False)
-rfunny3 = RFUNNY('https://anekdotovstreet.com/chernyy-yumor/', (1, 16), 'anekdot-text')
-aztro = AZTRO()
-logger.info('END OF WEB PARSING')
 
 
-@dp.message(Command(commands=['anecdote']))
+@dp.message(Command(commands=COMMAND1[1:]))
 async def get_request_anecdote(message: Message):
     logger.info(f'REQUEST FOR JOKES FROM {message.from_user.username}')
     kb = [
@@ -52,7 +22,7 @@ async def get_request_anecdote(message: Message):
     await message.reply(text='Какой?', reply_markup=keyboard)
 
 
-@dp.message(Command(commands=['horoscope']))
+@dp.message(Command(commands=[COMMAND2[1:]]))
 async def get_request_horoscope(message: Message):
     logger.info(f'REQUEST FOR HOROSCOPE FROM {message.from_user.username}')
     kb = [
@@ -62,10 +32,15 @@ async def get_request_horoscope(message: Message):
     await message.reply(text='Кто ты?', reply_markup=keyboard)
 
 
+@dp.message(Command(commands=[COMMAND3[1:]]))
+async def get_request_horoscope(message: Message):
+    await message.reply(text='Скинь мне одну или несколько картинок и я сделаю из них pdf')
+
+
 @dp.message(F.text.in_([KRINGE, BLACK]))
-async def send_joke(message: Message):
+async def send_joke(message: Message) -> None:
     text = message.text
-    logger.info(f'MESSAGE FROM {message.from_user.username}')
+    logger.info(f'MESSAGE (JOKE) FROM {message.from_user.username}')
     if text == KRINGE:
         joke: str = dbfunny.get_joke()
         await message.answer(f"<b>{joke}</b>", parse_mode=ParseMode.HTML)
@@ -77,9 +52,9 @@ async def send_joke(message: Message):
 
 
 @dp.message(F.text.in_(HOROSYMBS))
-async def send_horoscope(message: Message):
+async def send_horoscope(message: Message) -> None:
     text = message.text
-    logger.info(f'MESSAGE FROM {message.from_user.username}')
+    logger.info(f'MESSAGE (HOROSCOPE) FROM {message.from_user.username}')
     response: tuple[str, str] | None = aztro.get_answer(text)
     if response is not None:
         sign, text = response
@@ -97,7 +72,6 @@ async def check_message(message: Message) -> Union[bool, str]:
         logger.info(f'REQUEST FOR IMAGE TO PDF FOR {username} DENIED')
         await message.reply(text='Не могу выполнить это действие в групповом чате! Пиши мне в лс -> '
                                  'https://t.me/Sabir_Dobryak_bot')
-        await bot.send_message(message.from_user.id, "Скинь мне одну или несколько картинок и я сделаю из них pdf.")
         return False
     return username
 
@@ -109,9 +83,12 @@ async def photos_to_pdf(message: Message, album: List[Message]):
     pdfworker = PDFWorker(bot, username)
     my_message = await message.answer("Фото получил сохраняю...")
     for i, photo in enumerate(album, 1):
-        if photo := photo.photo:
+        if photo.photo:
             await my_message.edit_text(f"Сохраняю фото номер {i}")
-            await pdfworker.save_photo(photo[-1].file_id, i)
+            await pdfworker.save_photo(photo.photo[-1].file_id, i)
+        elif photo.document:
+            await my_message.edit_text(f"Сохраняю фото номер {i}")
+            await pdfworker.save_photo(photo.document.file_id, i)
         else:
             await bot.send_message(message.from_user.id, "Среди фото необрабатываемый файл! Его пропустил")
     logger.info(f'IMAGES FROM {username} SAVED')
@@ -119,20 +96,27 @@ async def photos_to_pdf(message: Message, album: List[Message]):
     logger.info(f'PDF FOR {username} SENT')
 
 
-@dp.message(F.photo)
+@dp.message((F.photo | F.document))
 async def photo_to_pdf(message: Message):
     if not (username := await check_message(message)):
         return
     pdfworker = PDFWorker(bot, username)
     my_message = await message.answer("Фото получил сохраняю...")
     await my_message.edit_text(f"Сохраняю фото номер 1")
-    await pdfworker.save_photo(message.photo[-1].file_id)
+    if message.photo:
+        await pdfworker.save_photo(message.photo[-1].file_id)
+    else:
+        await pdfworker.save_photo(message.document.file_id)
     logger.info(f'IMAGE FROM {username} SAVED')
     await pdfworker.send_pdf_photo(my_message, message)
     logger.info(f'PDF FOR {username} SENT')
 
 
 if __name__ == '__main__':
+    setup_bot_commands(bot)
     dp.message.middleware(MediaGroupMiddleware())
-    dp.run_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    try:
+        dp.run_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    finally:
+        bot.session.close()
     logger.info('SHUTDOWN')

@@ -1,6 +1,7 @@
 import requests
 import asyncio
 import aiohttp
+import pkgutil
 from bs4 import BeautifulSoup
 from random import choice
 from typing import List, Literal
@@ -11,7 +12,7 @@ class DBFUNNY:
 
     @staticmethod
     def open_file() -> List[str]:
-        with open('anek_djvu.txt', 'r', encoding='utf-8') as file:
+        with open('D:/python_projects/Funny_BOT/funcs/anek_djvu.txt', 'r', encoding='utf-8') as file:
             dbfunny = file.readlines()
         transfer = '\n'
         dbfunny = list(filter(lambda elem: elem != transfer, dbfunny))

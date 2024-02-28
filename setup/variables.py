@@ -1,7 +1,12 @@
 import logging
-from funnys import *
+from funcs.funnys import *
 from aiogram import Bot, Dispatcher
 
+TOKEN_PATH = 'D:/python_projects/Funny_BOT/setup/token.txt'
+
+CHAT_GROUP = 'group'
+CHAT_PRIVATE = 'private'
+CHAT_SUPERGROUP = 'supergroup'
 
 KRINGE = "Kringe"
 BLACK = "Black"
@@ -19,10 +24,10 @@ rfunny3 = RFUNNY('https://anekdotovstreet.com/chernyy-yumor/', (1, 16), 'anekdot
 aztro = AZTRO()
 logger.info('END OF WEB PARSING')
 
-# ********* READING MY BOT TOKEN ***********#
-with open('token.txt', 'r') as token_file:  #
-    token = token_file.read()               #
-# ******************************************#
+# ********* READING MY BOT TOKEN **********#
+with open(TOKEN_PATH, 'r') as token_file:  #
+    token = token_file.read()              #
+# *****************************************#
 
 bot = Bot(token=token)
 dp = Dispatcher()
