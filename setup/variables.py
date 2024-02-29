@@ -20,6 +20,7 @@ logger.setLevel(logging.INFO)
 logger.info('START')
 
 dbfunny = DBFUNNY()
+morning = MORNING()
 rfunny1 = RFUNNY('https://anekdoty.ru/cherniy-yumor/', (1, 6), 'holder-body')
 rfunny2 = RFUNNY('https://anekdotov.net/anekdot/black/index-page-', (0, 37), 'anekdot', False)
 rfunny3 = RFUNNY('https://anekdotovstreet.com/chernyy-yumor/', (1, 16), 'anekdot-text')

@@ -37,6 +37,11 @@ async def get_request_horoscope(message: Message):
     await message.reply(text='Скинь мне одну или несколько картинок и я сделаю из них pdf')
 
 
+@dp.message(Command(commands=[COMMAND4[1:]]))
+async def get_request_horoscope(message: Message):
+    await bot.send_photo(message.chat.id, morning.get_image(), caption=morning.get_caption())
+
+
 @dp.message(F.text.in_([KRINGE, BLACK]))
 async def send_joke(message: Message) -> None:
     text = message.text
@@ -74,7 +79,7 @@ async def check_message(message: Message) -> Union[bool, str]:
         await message.reply(text='Не могу выполнить это действие в групповом чате! Пиши мне в лс -> '
                                  'https://t.me/Sabir_Dobryak_bot')
         return False
-    return user_id
+    return str(user_id)
 
 
 @dp.message(F.media_group_id)

@@ -4,7 +4,7 @@ import aiohttp
 import pkgutil
 from bs4 import BeautifulSoup
 from random import choice
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 
 class DBFUNNY:
@@ -72,7 +72,7 @@ class RFUNNY:
 
 
 class AZTRO:
-    __version__ = '1.0.0'
+    __version__ = '1.0'
     SIGNS = Literal['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓']
     TRANSLATE_SIGNS = {'♈': 'aries', '♉': 'taurus', '♊': 'gemini', '♋': 'cancer', '♌': 'leo', '♍': 'virgo',
                        '♎': 'libra', '♏': 'scorpio', '♐': 'sagittarius', '♑': 'capricorn', '♒': 'aquarius',
@@ -88,4 +88,24 @@ class AZTRO:
             sign = BeautifulSoup(text, "html.parser").find('h1').text
             text = BeautifulSoup(text, "html.parser").find('p').text
             return sign, text
+        return
+
+
+class MORNING:
+    __version__ = '1.0'
+
+    def __init__(self):
+        self.first_url = 'https://api.thecatapi.com/v1/images/search'
+        self.second_url = 'https://forumsmile.net/cards/goodmorning/'
+
+    def get_image(self) -> Optional[str]:
+        response = requests.get(self.first_url)
+        if response.status_code == 200:
+            return response.json()[0]['url']
+        return
+
+    def get_caption(self) -> Optional[str]:
+        response = requests.get(self.second_url)
+        if response.status_code == 200:
+            return BeautifulSoup(response.text, "html.parser").find(class_='tag_message_top').p.text
         return
