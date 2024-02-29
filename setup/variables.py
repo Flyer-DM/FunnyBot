@@ -8,6 +8,8 @@ CHAT_GROUP = 'group'
 CHAT_PRIVATE = 'private'
 CHAT_SUPERGROUP = 'supergroup'
 
+PHOTO_EXT = ('png', 'jpg', 'jpeg')
+
 KRINGE = "Kringe"
 BLACK = "Black"
 HOROSYMBS = '♈♉♊♋♌♍♎♏♐♑♒♓'

@@ -66,6 +66,7 @@ async def send_horoscope(message: Message) -> None:
 
 async def check_message(message: Message) -> Union[bool, str]:
     username = message.from_user.username
+    user_id = message.from_user.id
     chat_type = message.chat.type
     logger.info(f'REQUEST FOR IMAGE TO PDF FROM {username} IN {chat_type}')
     if message.chat.type in (CHAT_GROUP, CHAT_SUPERGROUP):
@@ -73,7 +74,7 @@ async def check_message(message: Message) -> Union[bool, str]:
         await message.reply(text='Не могу выполнить это действие в групповом чате! Пиши мне в лс -> '
                                  'https://t.me/Sabir_Dobryak_bot')
         return False
-    return username
+    return user_id
 
 
 @dp.message(F.media_group_id)
@@ -81,16 +82,16 @@ async def photos_to_pdf(message: Message, album: List[Message]):
     if not (username := await check_message(message)):
         return
     pdfworker = PDFWorker(bot, username)
-    my_message = await message.answer("Фото получил сохраняю...")
+    my_message = await message.answer("Фото получил сохраняю..🤓.")
     for i, photo in enumerate(album, 1):
         if photo.photo:
-            await my_message.edit_text(f"Сохраняю фото номер {i}")
+            await my_message.edit_text(f"Сохраняю фото номер {i}🫡")
             await pdfworker.save_photo(photo.photo[-1].file_id, i)
-        elif photo.document:
-            await my_message.edit_text(f"Сохраняю фото номер {i}")
+        elif photo.document and photo.document.file_name.endswith(PHOTO_EXT):
+            await my_message.edit_text(f"Сохраняю фото номер {i}🫡")
             await pdfworker.save_photo(photo.document.file_id, i)
         else:
-            await bot.send_message(message.from_user.id, "Среди фото необрабатываемый файл! Его пропустил")
+            await bot.send_message(message.from_user.id, "Среди фото необрабатываемый файл😯! Его пропустил")
     logger.info(f'IMAGES FROM {username} SAVED')
     await pdfworker.send_pdf_photo(my_message, message)
     logger.info(f'PDF FOR {username} SENT')
@@ -101,11 +102,11 @@ async def photo_to_pdf(message: Message):
     if not (username := await check_message(message)):
         return
     pdfworker = PDFWorker(bot, username)
-    my_message = await message.answer("Фото получил сохраняю...")
-    await my_message.edit_text(f"Сохраняю фото номер 1")
+    my_message = await message.answer("Фото получил сохраняю... 🤓")
+    await my_message.edit_text(f"Сохраняю фото номер 1🫡")
     if message.photo:
         await pdfworker.save_photo(message.photo[-1].file_id)
-    else:
+    elif message.document.file_name.endswith(PHOTO_EXT):
         await pdfworker.save_photo(message.document.file_id)
     logger.info(f'IMAGE FROM {username} SAVED')
     await pdfworker.send_pdf_photo(my_message, message)

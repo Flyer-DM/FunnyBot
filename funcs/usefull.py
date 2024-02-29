@@ -74,10 +74,10 @@ class PDFWorker:
         return
 
     async def send_pdf_photo(self, my_message: Message, message: Message):
-        await my_message.edit_text("Сохранил! Преобразую...")
+        await my_message.edit_text("Сохранил! Преобразую... 🙃")
         pdfer = PDFer(self.username)
         pdf = FSInputFile(pdfer())
-        await my_message.edit_text("Преобразовал! Отправляю...")
+        await my_message.edit_text("Преобразовал! Отправляю... 😊")
         await self.bot.send_document(message.chat.id, pdf, caption="Ваш PDF-файл")
         await my_message.delete()
         pdfer.clear()
