@@ -1,10 +1,12 @@
 import requests
 import asyncio
 import aiohttp
-import pkgutil
 from bs4 import BeautifulSoup
 from random import choice
 from typing import List, Literal, Optional
+
+HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
+                         'Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36'}
 
 
 class DBFUNNY:
@@ -29,11 +31,9 @@ class DBFUNNY:
 
 
 class RFUNNY:
-    __version__ = '2.0'
+    __version__ = '2.0.1'
 
     async def get_page_data(self, session, page):
-        HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                                 'Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36'}
         if self.__url_type:
             page = f'{page}/' if page != 1 else ''
             url = self.__url + page
@@ -92,20 +92,37 @@ class AZTRO:
 
 
 class MORNING:
-    __version__ = '1.0'
+    __version__ = '2.0'
+
+    async def get_page_data(self, session, page):
+        url = self.__second_url + '.htm' if page == 1 else self.__second_url + f'-{page}.htm'
+        async with session.get(url=url, headers=HEADERS) as response:
+            response_text = await response.text()
+            soup = BeautifulSoup(response_text, "html.parser")
+            allp = map(lambda html: html.get_text(), soup.findAll(class_=self.__find_class))
+            self.mornings.extend(allp)
+
+    async def parse_pages(self):
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for page in range(1, 23):
+                task = asyncio.create_task(self.get_page_data(session, page))
+                tasks.append(task)
+            await asyncio.gather(*tasks)
 
     def __init__(self):
-        self.first_url = 'https://api.thecatapi.com/v1/images/search'
-        self.second_url = 'https://forumsmile.net/cards/goodmorning/'
+        self.__first_url = 'https://api.thecatapi.com/v1/images/search'
+        self.__second_url = 'https://pozdravok.com/pozdravleniya/lyubov/dobroe-utro/korotkie/proza'
+        self.__find_class = 'sfst'
+        self.mornings = []
+        asyncio.run(self.parse_pages())
 
     def get_image(self) -> Optional[str]:
-        response = requests.get(self.first_url)
+        response = requests.get(self.__first_url)
         if response.status_code == 200:
             return response.json()[0]['url']
         return
 
-    def get_caption(self) -> Optional[str]:
-        response = requests.get(self.second_url)
-        if response.status_code == 200:
-            return BeautifulSoup(response.text, "html.parser").find(class_='tag_message_top').p.text
-        return
+    def get_caption(self) -> str:
+        option = choice(self.mornings)
+        return option

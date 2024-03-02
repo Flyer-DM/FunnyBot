@@ -17,9 +17,10 @@ HOROSYMBS = '♈♉♊♋♌♍♎♏♐♑♒♓'
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 logger = logging.getLogger('FunnyBot')
 logger.setLevel(logging.INFO)
-logger.info('START')
+logger.info('START OF BOT')
 
 dbfunny = DBFUNNY()
+logger.info('START OF WEB PARSING')
 morning = MORNING()
 rfunny1 = RFUNNY('https://anekdoty.ru/cherniy-yumor/', (1, 6), 'holder-body')
 rfunny2 = RFUNNY('https://anekdotov.net/anekdot/black/index-page-', (0, 37), 'anekdot', False)
