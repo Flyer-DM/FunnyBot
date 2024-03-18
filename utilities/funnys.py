@@ -14,7 +14,7 @@ class DBFUNNY:
 
     @staticmethod
     def open_file() -> List[str]:
-        with open('D:/python_projects/Funny_BOT/funcs/anek_djvu.txt', 'r', encoding='utf-8') as file:
+        with open('D:/python_projects/Funny_BOT/utilities/anek_djvu.txt', 'r', encoding='utf-8') as file:
             dbfunny = file.readlines()
         transfer = '\n'
         dbfunny = list(filter(lambda elem: elem != transfer, dbfunny))

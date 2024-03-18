@@ -1,7 +1,7 @@
 from setup.commands import *
 from setup.variables import *
-from funcs.funnys import *
-from funcs.usefull import *
+from utilities.funnys import *
+from utilities.usefull import *
 from aiogram import F
 from aiogram.filters import Command
 from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
@@ -11,7 +11,7 @@ from random import choice
 
 @dp.message(Command(commands=COMMAND1[1:]))
 async def get_request_anecdote(message: Message):
-    logger.info(f'REQUEST FOR JOKES FROM {message.from_user.username}')
+    logger.info(f'REQUEST FOR JOKES FROM {message.from_user.id}')
     kb = [
         [
             KeyboardButton(text=KRINGE),
@@ -24,7 +24,7 @@ async def get_request_anecdote(message: Message):
 
 @dp.message(Command(commands=[COMMAND2[1:]]))
 async def get_request_horoscope(message: Message):
-    logger.info(f'REQUEST FOR HOROSCOPE FROM {message.from_user.username}')
+    logger.info(f'REQUEST FOR HOROSCOPE FROM {message.from_user.id}')
     kb = [
         [KeyboardButton(text=elem) for elem in HOROSYMBS]
     ]
@@ -39,13 +39,14 @@ async def get_request_horoscope(message: Message):
 
 @dp.message(Command(commands=[COMMAND4[1:]]))
 async def get_request_horoscope(message: Message):
+    logger.info(f'MESSAGE (MORNING) FROM {message.from_user.id}')
     await bot.send_photo(message.chat.id, morning.get_image(), caption=morning.get_caption())
 
 
 @dp.message(F.text.in_([KRINGE, BLACK]))
 async def send_joke(message: Message) -> None:
     text = message.text
-    logger.info(f'MESSAGE (JOKE) FROM {message.from_user.username}')
+    logger.info(f'MESSAGE (JOKE) FROM {message.from_user.id}')
     if text == KRINGE:
         joke: str = dbfunny.get_joke()
         await message.answer(f"<b>{joke}</b>", parse_mode=ParseMode.HTML)
@@ -53,29 +54,28 @@ async def send_joke(message: Message) -> None:
         joke: RFUNNY = choice((rfunny1, rfunny2, rfunny3))
         joke = joke.get_joke()
         await message.answer(f"<b>{joke}</b>", parse_mode=ParseMode.HTML)
-    logger.info(f'RESPONSE SENT TO {message.from_user.username}')
+    logger.info(f'RESPONSE SENT TO {message.from_user.id}')
 
 
 @dp.message(F.text.in_(HOROSYMBS))
 async def send_horoscope(message: Message) -> None:
     text = message.text
-    logger.info(f'MESSAGE (HOROSCOPE) FROM {message.from_user.username}')
+    logger.info(f'MESSAGE (HOROSCOPE) FROM {message.from_user.id}')
     response: tuple[str, str] | None = aztro.get_answer(text)
     if response is not None:
         sign, text = response
         await message.answer(f"<b>{sign}</b>\n{text}", parse_mode=ParseMode.HTML)
     else:
         await message.answer(f"<b>Ничего не нашёл(</b>", parse_mode=ParseMode.HTML)
-    logger.info(f'RESPONSE SENT TO {message.from_user.username}')
+    logger.info(f'RESPONSE SENT TO {message.from_user.id}')
 
 
 async def check_message(message: Message) -> Union[bool, str]:
-    username = message.from_user.username
     user_id = message.from_user.id
     chat_type = message.chat.type
-    logger.info(f'REQUEST FOR IMAGE TO PDF FROM {username} IN {chat_type}')
+    logger.info(f'REQUEST FOR IMAGE TO PDF FROM {id} IN {chat_type}')
     if message.chat.type in (CHAT_GROUP, CHAT_SUPERGROUP):
-        logger.info(f'REQUEST FOR IMAGE TO PDF FOR {username} DENIED')
+        logger.info(f'REQUEST FOR IMAGE TO PDF FOR {id} DENIED')
         await message.reply(text='Не могу выполнить это действие в групповом чате! Пиши мне в лс -> '
                                  'https://t.me/Sabir_Dobryak_bot')
         return False
@@ -122,7 +122,10 @@ if __name__ == '__main__':
     setup_bot_commands(bot)
     dp.message.middleware(MediaGroupMiddleware())
     try:
+        logger.info('WORKING')
         dp.run_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    except Exception as e:
+        logger.error(f'CRITICAL ERROR: {e}')
     finally:
         bot.session.close()
     logger.info('SHUTDOWN')

@@ -1,5 +1,6 @@
 import logging
-from funcs.funnys import *
+from utilities.funnys import *
+from utilities.log_setup import CustomFormatter
 from aiogram import Bot, Dispatcher
 
 TOKEN_PATH = 'D:/python_projects/Funny_BOT/setup/token.txt'
@@ -14,9 +15,13 @@ KRINGE = "Kringe"
 BLACK = "Black"
 HOROSYMBS = '♈♉♊♋♌♍♎♏♐♑♒♓'
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
-logger = logging.getLogger('FunnyBot')
+fmt = '%(asctime)s | %(levelname)8s | %(message)s'
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+stdout_handler = logging.StreamHandler()
+stdout_handler.setLevel(logging.INFO)
+stdout_handler.setFormatter(CustomFormatter(fmt))
+logger.addHandler(stdout_handler)
 logger.info('START OF BOT')
 
 dbfunny = DBFUNNY()
